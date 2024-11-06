@@ -2,11 +2,27 @@ import {test, expect, it, describe} from "vitest";
 import { RegisterUseCase } from "./register";
 import { PrismaUsersRepository } from "@/repositories/prima/prisma-users-repository";
 import { compare } from "bcryptjs";
+import { InMemoryUsersRepository } from "@/repositories/in-memory/in-memory-users-repository";
+import { UserAlreadyExistsError } from "./errors/user-alreay-exists";
+import { string } from "zod";
 
 describe('Register use case', () => {
+    it('should be able to register', async () =>{
+        const inMemoryUserRepository = new InMemoryUsersRepository();
+        const registerUseCase = new RegisterUseCase(inMemoryUserRepository);
+        
+        const { user } = await registerUseCase.execute({
+            name:"John Doe",
+            email:"jhondoea@example.com",
+            password:"123456"
+        });
+        
+        expect(typeof(user.id)).toBe("string");
+    });
+
     it('should hash user password upon registration', async () =>{
-        const prismaUserRepository = new PrismaUsersRepository();
-        const registerUseCase = new RegisterUseCase(prismaUserRepository);
+        const inMemoryUserRepository = new InMemoryUsersRepository();
+        const registerUseCase = new RegisterUseCase(inMemoryUserRepository);
         
         const { user } = await registerUseCase.execute({
             name:"John Doe",
@@ -14,11 +30,30 @@ describe('Register use case', () => {
             password:"123456"
         })
 
-        const isPasswordHashed = compare(
+        const isPasswordCorretlyHashed = await compare(
             '123456',
             user.password_hash,
         );
 
-        expect(isPasswordHashed).toBe(true);
+        expect(isPasswordCorretlyHashed).toBe(true);
+    });
+
+    it('should not be able to register with same email twice', async () =>{
+        const inMemoryUserRepository = new InMemoryUsersRepository();
+        const registerUseCase = new RegisterUseCase(inMemoryUserRepository);
+        
+        const email = "jhondoea@example.com";
+
+        await registerUseCase.execute({
+            name:"John Doe",
+            email: email,
+            password:"123456"
+        })
+
+        expect(()=>registerUseCase.execute({
+            name:"John Doe",
+            email: email,
+            password:"123456"
+        })).rejects.toBeInstanceOf(UserAlreadyExistsError);
     });
 });
