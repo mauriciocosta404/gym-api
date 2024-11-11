@@ -1,10 +1,8 @@
-import {test, expect, it, describe} from "vitest";
+import {expect, it, describe} from "vitest";
 import { RegisterUseCase } from "./register";
-import { PrismaUsersRepository } from "@/repositories/prima/prisma-users-repository";
 import { compare } from "bcryptjs";
 import { InMemoryUsersRepository } from "@/repositories/in-memory/in-memory-users-repository";
 import { UserAlreadyExistsError } from "./errors/user-alreay-exists";
-import { string } from "zod";
 
 describe('Register use case', () => {
     it('should be able to register', async () =>{
@@ -50,7 +48,7 @@ describe('Register use case', () => {
             password:"123456"
         })
 
-        expect(()=>registerUseCase.execute({
+        await expect(()=>registerUseCase.execute({
             name:"John Doe",
             email: email,
             password:"123456"
