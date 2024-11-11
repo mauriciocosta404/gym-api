@@ -30,4 +30,5 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
         throw err;
     }
 
+    return reply.status(201).send();
 }
